@@ -1,0 +1,9 @@
+# proxies.txt — one proxy per line in the format:
+# ip:port:username:password
+#
+# Example:
+# 192.168.1.100:8080:myuser:mypassword
+# 10.0.0.1:3128:proxyuser:proxypass
+#
+# Copy this file to proxies.txt and fill in your proxy details.
+# proxies.txt is excluded from version control to protect credentials.

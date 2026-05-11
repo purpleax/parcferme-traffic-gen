@@ -1,0 +1,5 @@
+proxies.txt
+CLAUDE.md
+__pycache__/
+*.pyc
+.DS_Store
