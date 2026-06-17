@@ -1,6 +1,8 @@
-# traffic_gen
+# parcferme-traffic-gen
 
-A multi-threaded, session-based HTTP traffic simulator for generating realistic baseline traffic against a known web application. Designed for WAF testing and traffic baselining in authorised lab environments.
+Session-based HTTP traffic simulator for WAF baseline generation, tuned for [parcferme.fastlylab.com](https://parcferme.fastlylab.com) — an authenticated F1 memorabilia demo site.
+
+> **Authorised use only.** This tool is intended for use against lab environments you own or have explicit permission to test.
 
 ## How it works
 
@@ -10,13 +12,18 @@ Rather than crawling links, the script models **user journeys** — predefined s
 
 | Journey | Path sequence | Weight |
 |---|---|---|
-| browse | `/` | 30% |
-| login | `/` → `/login` | 25% |
-| register | `/` → `/user_register` | 20% |
-| contact | `/` → `/contact` | 15% |
-| forgot-password | `/` → `/login` → `/forgot_password` | 10% |
+| `browse` | `/` | 10% |
+| `shop` | `/ → /shop` | 12% |
+| `shop-p2` | `/ → /shop?page=2` | 8% |
+| `new-arrivals` | `/ → /shop?sort=newest` | 10% |
+| `product-view` | `/ → /shop → /product/<random>` | 25% |
+| `login` | `/ → /login` | 12% |
+| `register` | `/ → /login → /register` | 8% |
+| `cart` | `/ → /shop → /product/<random> → /cart` | 8% |
+| `account` | `/ → /login → /account/orders` | 2% |
+| `api-docs` | `/api/docs` | 5% |
 
-Weights reflect realistic user behaviour: the homepage receives the most traffic, and deep flows like password recovery are proportionally rare.
+Product pages are picked randomly from all 24 items in the catalogue each time a product journey runs, spreading traffic evenly across the full catalogue.
 
 ### Realism features
 
@@ -28,7 +35,7 @@ Weights reflect realistic user behaviour: the homepage receives the most traffic
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.8+
 - `requests`
 
 ```bash
@@ -40,7 +47,7 @@ pip install -r requirements.txt
 ### Run directly
 
 ```bash
-python3 traffic_gen.py --target https://example.com
+python3 traffic_gen.py --target https://parcferme.fastlylab.com
 ```
 
 ```
@@ -54,10 +61,10 @@ Examples:
 
 ```bash
 # Single user, default timing
-python3 traffic_gen.py --target https://www.fastlylab.com
+python3 traffic_gen.py --target https://parcferme.fastlylab.com
 
 # 8 concurrent users, faster pacing
-python3 traffic_gen.py --target https://www.fastlylab.com --delay 1.5 --threads 8
+python3 traffic_gen.py --target https://parcferme.fastlylab.com --delay 1.5 --threads 8
 ```
 
 Stop with `Ctrl-C`.
@@ -66,13 +73,13 @@ Stop with `Ctrl-C`.
 
 ```bash
 # Build (bakes proxies.txt into the image)
-docker build -t traffic-gen .
+docker build -t parcferme-traffic-gen .
 
-# Run with defaults (fastlylab.com, 4 threads, ~2s delay)
-docker run --rm traffic-gen
+# Run with defaults (parcferme.fastlylab.com, 4 threads, ~2s delay)
+docker run --rm parcferme-traffic-gen
 
 # Override settings
-docker run --rm traffic-gen --target https://example.com --delay 1 --threads 10
+docker run --rm parcferme-traffic-gen --target https://parcferme.fastlylab.com --delay 1 --threads 10
 ```
 
 > If you update `proxies.txt`, rebuild the image for the changes to take effect.
@@ -94,23 +101,20 @@ Example:
 
 One proxy is selected randomly per journey session. If the file is missing or empty, the script runs without proxies.
 
-## Adding pages
+## Extending
 
-Edit the `JOURNEYS` list at the top of `traffic_gen.py`:
+**Add a journey:** append a `(name, [path, ...], weight)` tuple to `JOURNEYS` and rebalance weights to sum to `1.0`.
+
+**Add a product:** append the slug to `PRODUCTS`.
+
+**Use product randomisation in a new journey:** include the string `"PRODUCT"` as a path step — it resolves to a random product slug at runtime:
 
 ```python
 JOURNEYS = [
-    ("browse",          ["/"],                               0.30),
-    ("login",           ["/", "/login"],                     0.25),
-    ("register",        ["/", "/user_register"],             0.20),
-    ("contact",         ["/", "/contact"],                   0.15),
-    ("forgot-password", ["/", "/login", "/forgot_password"], 0.10),
-    # Add new journeys here:
-    ("product",         ["/", "/products", "/products/demo"], 0.00),
+    ...
+    ("wishlist", ["/", "/shop", "PRODUCT", "/wishlist"], 0.05),
 ]
 ```
-
-Adjust the weights so they sum to `1.0`.
 
 ## Files
 

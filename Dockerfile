@@ -12,5 +12,5 @@ COPY traffic_gen.py proxies.txt ./
 
 # Default entrypoint & cmd
 ENTRYPOINT ["python3", "traffic_gen.py"]
-CMD ["--target", "https://www.fastlylab.com", "--delay", "2", "--threads", "4"]
+CMD ["--target", "https://parcferme.fastlylab.com", "--delay", "2", "--threads", "4"]
 

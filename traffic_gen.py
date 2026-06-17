@@ -29,14 +29,47 @@ HEADERS_BASE = {
     "Upgrade-Insecure-Requests": "1",
 }
 
+# All 24 product pages. "PRODUCT" in a journey path is replaced with a random pick at runtime.
+PRODUCTS = [
+    "/product/monaco-hairpin-fine-art-print",
+    "/product/1992-monza-podium-replica-helmet",
+    "/product/paddock-pass-collection-1984-1999",
+    "/product/1-8-scale-championship-car-2021-season",
+    "/product/carbon-front-wing-endplate-2019-spec",
+    "/product/race-worn-nomex-gloves-silverstone-1997",
+    "/product/team-cap-2026-limited-edition",
+    "/product/1-18-classic-v12-spa-winner-1995",
+    "/product/1976-season-poster-restored-archive",
+    "/product/1988-season-tribute-mini-helmet-1-2",
+    "/product/race-suit-replica-scuderia-veloce-2024",
+    "/product/visor-tear-off-set-monaco",
+    "/product/night-race-photography-marina-bay",
+    "/product/spa-eau-rouge-panorama-lithograph",
+    "/product/f1-steering-wheel-replica-fully-wired",
+    "/product/1-43-grid-set-full-2026-season",
+    "/product/carbon-brake-disc-caliper-display",
+    "/product/carbon-track-spec-helmet-shell",
+    "/product/magnesium-wheel-rim-race-used",
+    "/product/pit-crew-fireproof-suit-northline-racing",
+    "/product/pit-board-final-lap-display",
+    "/product/driver-boots-practice-session-worn",
+    "/product/podium-champagne-signed-magnum",
+    "/product/wind-tunnel-model-front-wing-section",
+]
+
 # (name, path_sequence, weight)
-# Weights reflect realistic distribution: homepage gets more hits than deep pages.
+# "PRODUCT" is resolved to a random product slug per journey run.
 JOURNEYS = [
-    ("browse",          ["/"],                               0.30),
-    ("login",           ["/", "/login"],                     0.25),
-    ("forgot-password", ["/", "/login", "/forgot_password"], 0.10),
-    ("register",        ["/", "/user_register"],             0.20),
-    ("contact",         ["/", "/contact"],                   0.15),
+    ("browse",       ["/"],                                    0.10),
+    ("shop",         ["/", "/shop"],                           0.12),
+    ("shop-p2",      ["/", "/shop?page=2"],                    0.08),
+    ("new-arrivals", ["/", "/shop?sort=newest"],               0.10),
+    ("product-view", ["/", "/shop", "PRODUCT"],                0.25),
+    ("login",        ["/", "/login"],                          0.12),
+    ("register",     ["/", "/login", "/register"],             0.08),
+    ("cart",         ["/", "/shop", "PRODUCT", "/cart"],       0.08),
+    ("account",      ["/", "/login", "/account/orders"],       0.02),
+    ("api-docs",     ["/api/docs"],                            0.05),
 ]
 
 _NAMES   = [j[0] for j in JOURNEYS]
@@ -78,6 +111,7 @@ def run_journeys():
 
         session = requests.Session()
         referer = None
+        paths = [random.choice(PRODUCTS) if p == "PRODUCT" else p for p in paths]
         print(f"[»] Thread-{tid} journey={name} proxy={proxy_url or 'none'}")
 
         for path in paths:
